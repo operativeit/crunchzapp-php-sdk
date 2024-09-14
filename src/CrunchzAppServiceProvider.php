@@ -10,7 +10,7 @@ class CrunchzAppServiceProvider extends ServiceProvider
     {
         $this->publishes([
             __DIR__.'/../config/crunchzapp.php' => config_path('crunchzapp.php')
-        ]);
+        ], 'crunchzapp-config');
     }
 
     public function register(): void
