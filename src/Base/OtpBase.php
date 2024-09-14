@@ -8,6 +8,8 @@ class OtpBase {
     protected $contactId;
     protected $payload;
     protected $client;
+    protected $code;
+    protected $type;
     protected $endpoint = 'https://api.crunchz.app/api';
 
     protected $prompt;
@@ -23,32 +25,13 @@ class OtpBase {
         return $this;
     }
 
-    public function type($type): static
+    public function otpType($type): static
     {
-        match ($type) {
-            'code' => $this->payload = [
-                'type' => 'code',
-                'method_request' => 'POST',
-                'method_validate' => 'POST',
-                'path_request' => '/otp/code/request',
-                'path_global_request' => '/otp/code/global',
-                'path_validate' => '/otp/code/validate',
-                'path_global_validate' => '/otp/code/validate',
-                'body_request' => $this->bodyCode(),
-                'body_validate' => 
-            ],
-            'link' => $this->payload = [
-                'type' => 'link',
-                'method_request' => 'POST',
-                'path_request' => '/otp/link/request',
-                'path_global_request' => '/otp/link/global',
-                'body_request' => $this->bodyLink()
-            ]
-        };
+        $this->type = $type;
         return $this;
     }
 
-    public function bodyCode()
+    public function bodyCode(): array
     {
         return [
             'contact_id' => $this->contactId,
@@ -59,6 +42,24 @@ class OtpBase {
             'name' => config('crunchzapp.otp.code.name'),
             'expires' => config('crunchzapp.otp.code.expires')
         ];
+    }
+
+    public function bodyValidate(): array
+    {
+        return [
+            'contact_id' => $this->contactId,
+            'code' => $this->code,
+        ];
+    }
+
+    public function code($code): static
+    {
+        if ($this->payload['type'] === 'code') {
+            $this->code = $code;
+            return $this;
+        } else {
+            throw new \Exception('You cannot declare code when the otp type was link');
+        }
     }
 
     public function prompt($message): static

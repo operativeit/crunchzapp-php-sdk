@@ -4,6 +4,7 @@ namespace Crunchzapp\Services;
 
 use Crunchzapp\Base\OtpBase;
 use Illuminate\Support\Facades\Http;
+use Mockery\Exception;
 
 class OtpService extends OtpBase
 {
@@ -16,12 +17,18 @@ class OtpService extends OtpBase
             ->withToken($this->token);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function send()
     {
-        $client = $this->client->post($this->payload['path_request'], [
-            ''
-        ]);
-        return $client->json();
+        try {
+            $payload = $this->getPayload();
+            $client = $this->client->post($payload['path_request'], $payload['body_request']);
+            return $client->json();
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
     }
 
     /**
@@ -46,6 +53,32 @@ class OtpService extends OtpBase
         $this->expiredMessage = config('crunchzapp.otp.link.respond.expired');
         $this->callbackSuccess = config('crunchzapp.otp.link.callback.success');
         $this->callbackFailed = config('crunchzapp.otp.link.callback.failed');
+    }
 
+    /**
+     * @return array
+     */
+    public function getPayload(): array
+    {
+        return match ($this->type) {
+            'code' => [
+                'type' => 'code',
+                'method_request' => 'POST',
+                'method_validate' => 'POST',
+                'path_request' => '/otp/code/request',
+                'path_global_request' => '/otp/code/global',
+                'path_validate' => '/otp/code/validate',
+                'path_global_validate' => '/otp/code/validate',
+                'body_request' => $this->bodyCode(),
+                'body_validate' => $this->bodyValidate()
+            ],
+            'link' => [
+                'type' => 'link',
+                'method_request' => 'POST',
+                'path_request' => '/otp/link/request',
+                'path_global_request' => '/otp/link/global',
+                'body_request' => $this->bodyLink()
+            ]
+        };
     }
 }
