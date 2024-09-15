@@ -29,19 +29,6 @@ trait MessageTrait {
         return $this;
     }
 
-    public function checkNumber($phoneNumber): static
-    {
-        $this->payload[] = [
-            'name' => __FUNCTION__,
-            'method' => 'GET',
-            'path' => '/channel/check-phone-number',
-            'body' => [
-                'phone' => $phoneNumber
-            ]
-        ];
-        return $this;
-    }
-
     public function text($message): static
     {
         $this->payload[] = [
