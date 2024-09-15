@@ -4,15 +4,18 @@ namespace Crunchzapp\Services;
 
 use Crunchzapp\Base\OtpBase;
 use Illuminate\Support\Facades\Http;
-use Mockery\Exception;
 
-class OtpService extends OtpBase
+final class OtpService extends OtpBase
 {
 
-    public function __construct()
+    public function __construct($type)
     {
+        $this->type = $type;
+        $this->payload = $this->getPayload();
+
         $this->tokenHandler();
         $this->otpLinkConstruct();
+
         $this->client = Http::baseUrl($this->endpoint)
             ->withToken($this->token);
     }
@@ -26,6 +29,25 @@ class OtpService extends OtpBase
             $payload = $this->getPayload();
             $client = $this->client->post($payload['path_request'], $payload['body_request']);
             return $client->json();
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function validate($code)
+    {
+        try {
+            $this->code = $code;
+            $payload = $this->getPayload();
+            if ($payload['type'] === 'code') {
+                $client = $this->client->post($payload['path_validate'], $payload['body_validate']);
+                return $client->json();
+            } else {
+                throw new \Exception('Validate only accept otp code method');
+            }
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }

@@ -25,12 +25,6 @@ class OtpBase {
         return $this;
     }
 
-    public function otpType($type): static
-    {
-        $this->type = $type;
-        return $this;
-    }
-
     public function bodyCode(): array
     {
         return [
@@ -54,12 +48,8 @@ class OtpBase {
 
     public function code($code): static
     {
-        if ($this->payload['type'] === 'code') {
-            $this->code = $code;
-            return $this;
-        } else {
-            throw new \Exception('You cannot declare code when the otp type was link');
-        }
+        $this->code = $code;
+        return $this;
     }
 
     public function prompt($message): static
@@ -72,67 +62,48 @@ class OtpBase {
         }
     }
 
-    public function successResponse($message): static
+    /**
+     * @throws \Exception
+     */
+    public function responseMessage($successResponse = null, $failedResponse = null, $expiredResponse = null): static
     {
         if ($this->payload['type'] === 'link') {
-            $this->successMessage = $message;
+            if (!is_null($successResponse)) {
+                $this->successMessage = $successResponse;
+            }
+            if (!is_null($failedResponse)) {
+                $this->failedMessage = $failedResponse;
+            }
+            if (!is_null($expiredResponse)) {
+                $this->expiredMessage = $expiredResponse;
+            }
             return $this;
         } else {
             throw new \Exception('You cannot declare success response when the otp type was code');
         }
     }
 
-    public function failedResponse($message): static
+    public function callback($successCallback, $failedCallback)
     {
         if ($this->payload['type'] === 'link') {
-            $this->failedMessage = $message;
-            return $this;
-        } else {
-            throw new \Exception('You cannot declare failed response when the otp type was code');
-        }
-    }
-
-    public function expiredResponse($message): static
-    {
-        if ($this->payload['type'] === 'link') {
-            $this->expiredMessage = $message;
-            return $this;
-        } else {
-            throw new \Exception('You cannot declare expired response when the otp type was code');
-        }
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function successCallback($url): static
-    {
-        if ($this->payload['type'] === 'link') {
-            if (filter_var($url, FILTER_VALIDATE_URL)) {
-                $this->callbackSuccess = $url;
-                return $this;
-            } else {
-                throw new \Exception('The success link mus be a valid url');
+            if (!is_null($successCallback)) {
+                if (filter_var($successCallback, FILTER_VALIDATE_URL)) {
+                    $this->callbackSuccess = $successCallback;
+                } else {
+                    throw new \Exception('The success link callback must be a valid url');
+                }
             }
+
+            if (!is_null($failedCallback)) {
+                if (filter_var($failedCallback, FILTER_VALIDATE_URL)) {
+                    $this->callbackFailed = $failedCallback;
+                } else {
+                    throw new \Exception('The failed link callback must be a valid url');
+                }
+            }
+            return $this;
         } else {
             throw new \Exception('You cannot declare success callback when the otp type was code');
-        }
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function failedCallback($url): static
-    {
-        if ($this->payload['type'] === 'link') {
-            if (filter_var($url, FILTER_VALIDATE_URL)) {
-                $this->callbackFailed = $url;
-                return $this;
-            } else {
-                throw new \Exception('The success link mus be a valid url');
-            }
-        } else {
-            throw new \Exception('You cannot declare failed callback when the otp type was code');
         }
     }
 

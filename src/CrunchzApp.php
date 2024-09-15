@@ -12,8 +12,8 @@ final class CrunchzApp {
         return new ChannelService();
     }
 
-    public static function otp()
+    public static function otp($type): OtpService
     {
-        return new OtpService();
+        return new OtpService($type);
     }
 }

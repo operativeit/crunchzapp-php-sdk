@@ -17,32 +17,31 @@ final class ChannelService extends WhatsAppBase {
     /**
      * @throws \Exception
      */
-    public function sendPool(): mixed
+    public function sendPool(): array
     {
         if (is_null($this->token)) {
             throw new \Exception('Channel token is required');
         }
+        if (count($this->payload) < 1) {
+            throw new \Exception('You cannot use less than 2 payload when using sendPool method, please use send function instead');
+        }
 
         try {
-            if (count($this->payload) > 1) {
-                $array = [];
-                $client = Http::pool(fn (Pool $pool) => $this->poolHttpRequest($pool));
-                foreach ($client as $key => $item) {
-                    if (!$item->ok()) {
-                        throw new \Exception('Some api have an error sending. Please review what you are doing');
-                    } else {
-                        $payload = $this->payload[$key];
-                        $array[$key] = [
-                            'path' => $payload['path'],
-                            'body' => $payload['body'],
-                            'result' => $item->json()
-                        ];
-                    }
+            $array = [];
+            $client = Http::pool(fn (Pool $pool) => $this->poolHttpRequest($pool));
+            foreach ($client as $key => $item) {
+                if (!$item->ok()) {
+                    throw new \Exception('Some api have an error sending. Please review what you are doing');
+                } else {
+                    $payload = $this->payload[$key];
+                    $array[$key] = [
+                        'path' => $payload['path'],
+                        'body' => $payload['body'],
+                        'result' => $item->json()
+                    ];
                 }
-                return $array;
-            } else {
-                throw new \Exception('You cannot use less than 2 payload when using sendPool method, please use send function instead');
             }
+            return $array;
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
@@ -57,15 +56,15 @@ final class ChannelService extends WhatsAppBase {
             throw new \Exception('Channel token is required');
         }
 
-        if (count($this->payload) <= 1) {
-            try {
-                $payload = $this->payload[0];
-                return $this->client->withToken($this->token)->{$payload['method']}($payload['path'], $payload['body'])->json();
-            } catch (\Exception $e) {
-                throw new \Exception($e->getMessage());
-            }
-        } else {
+        if (count($this->payload) > 1) {
             throw new \Exception('You cannot use more than 1 payload when using send method, please use sendPool function instead.');
+        }
+
+        try {
+            $payload = $this->payload[0];
+            return $this->client->withToken($this->token)->{$payload['method']}($payload['path'], $payload['body'])->json();
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
         }
     }
 
